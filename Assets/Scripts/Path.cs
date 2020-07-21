@@ -2,21 +2,24 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Path : MonoBehaviour
+namespace PointAndClick
 {
-    [SerializeField] private Polygon _walkablePoly;
-    [SerializeField] private List<Polygon> _obstaclePolygons;
-
-    // Start is called before the first frame update
-    void Start()
+    public class Path : MonoBehaviour
     {
-        if (_walkablePoly == null)
-            Debug.LogError("No walkable polygon added!");
-    }
+        [SerializeField] private Polygon _walkablePoly;
+        [SerializeField] private List<Polygon> _obstaclePolygons;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        // Start is called before the first frame update
+        void Start()
+        {
+            if (_walkablePoly == null)
+                Debug.LogError("No walkable polygon added!");
+        }
+
+        // Update is called once per frame
+        void Update()
+        {
+
+        }
     }
 }
