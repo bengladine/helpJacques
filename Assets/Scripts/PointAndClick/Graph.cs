@@ -7,10 +7,10 @@ namespace PointAndClick
 {
     public class Node
     {
-        public Vector3 Position;
-        public Node(Vector3 position)
+        public Vertex Vertex;
+        public Node(Vertex vertex)
         {
-            Position = position;
+            Vertex = vertex;
         }
     }
     public class Graph : MonoBehaviour
@@ -18,8 +18,9 @@ namespace PointAndClick
         public List<Polygon> Polygons = new List<Polygon>();
 
         private List<Vertex> _concaveVertices = new List<Vertex>();
+        private List<Node> _nodes = new List<Node>();
+        private List<List<Edge>> _edges = new List<List<Edge>>();
 
-        // Start is called before the first frame update
         void Start()
         {
             bool firstPoly = true;
@@ -32,11 +33,25 @@ namespace PointAndClick
                         if (Helpers.IsVertexConcave(Polygons[i].Points, j) == firstPoly)
                         {
                             _concaveVertices.Add(Polygons[i].Points[j]);
+                            AddNode(new Node(Polygons[i].Points[j]));
                         }
                     }
                 }
 
                 firstPoly = false;
+            }
+
+            for (int i = 0; i < _concaveVertices.Count; i++)
+            {
+                Vertex a = _concaveVertices[i];
+                for (int j = 0; j < _concaveVertices.Count; j++)
+                {
+                    Vertex b = _concaveVertices[j];
+                    if (IsInLineOfSight(a, b))
+                    {
+
+                    }
+                }
             }
         }
 
@@ -84,10 +99,37 @@ namespace PointAndClick
             return true;
         }
 
-        // Update is called once per frame
-        void Update()
+        private void AddEdge(Edge edge)
         {
+            if (GetEdge(edge.From, edge.To) == null)
+            {
+                _edges[edge.From].Add(edge);
+            }
 
+            if (GetEdge(edge.To, edge.From) == null)
+            {
+                _edges[edge.To].Add(new Edge(edge.To, edge.From, edge.Cost));
+            }
+        }
+
+        public Edge GetEdge(int from, int to)
+        {
+            var fromEdges = _edges[from];
+            for (int i = 0; i < fromEdges.Count; i++)
+            {
+                if (fromEdges[i].To == to)
+                {
+                    return fromEdges[i];
+                }
+            }
+
+            return null;
+        }
+
+        public void AddNode(Node node)
+        {
+            _nodes.Add(node);
+            _edges.Add(new List<Edge>());
         }
     }
 }

@@ -7,6 +7,7 @@ public class Player : MonoBehaviour
     [SerializeField] private float _speed = 1.0f;
     [SerializeField] private float _radius = 1.0f;
     private Vector3 _target;
+    private Vector2 _currentTarget;
 
     // Start is called before the first frame update
     void Start()
