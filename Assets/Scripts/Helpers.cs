@@ -13,14 +13,14 @@ public class Helpers
         return index;
     }
 
-    static public bool IsVertexConcave(List<Vertex> vertices, int index)
+    static public bool IsVertexConcave(List<Vector2> vertices, int index)
     {
         var currentVertex = vertices[index];
         var nextVertex = vertices[ClampListIndex(index + 1, vertices.Count)];
         var prevVertex = vertices[ClampListIndex(index - 1, vertices.Count)];
 
-        var leftVector = currentVertex.Position - prevVertex.Position;
-        var rightVector = nextVertex.Position - currentVertex.Position;
+        var leftVector = currentVertex - prevVertex;
+        var rightVector = nextVertex - currentVertex;
 
         float cross = (leftVector.x * rightVector.y) - (leftVector.y * rightVector.x);
 
@@ -31,6 +31,11 @@ public class Helpers
     static public float DistanceSquared(Vector2 a, Vector2 b)
     {
         return (b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y);
+    }
+
+    static public float Distance(Vector2 a, Vector2 b)
+    {
+        return Mathf.Sqrt(DistanceSquared(a,b));
     }
 
     static public bool LineSegmentsCross(Vector2 a, Vector2 b, Vector2 c, Vector2 d)

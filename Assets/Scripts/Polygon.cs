@@ -11,7 +11,7 @@ namespace PointAndClick
     public class Polygon : MonoBehaviour
     {
         [SerializeField, HideInInspector]
-        public List<Vertex> Points = new List<Vertex>();
+        public List<Vector2> Points = new List<Vector2>();
 
         public Color ControlCol = Color.red;
         public Color SegmentCol = Color.green;
@@ -19,7 +19,7 @@ namespace PointAndClick
         public float ControlPointDiameter = 0.075f;
         public bool displayControlPoints = true;
 
-        public void SplitSegment(Vertex anchorPos, int segmentIndex)
+        public void SplitSegment(Vector2 anchorPos, int segmentIndex)
         {
             Points.Insert(segmentIndex + 1, anchorPos);
         }
@@ -31,7 +31,7 @@ namespace PointAndClick
 
         public void MovePoint(int index, Vector2 pos)
         {
-            Points[index].Position = pos;
+            Points[index] = pos;
         }
 
         public bool IsPointInPolygon(Vector2 point, bool toleranceOutside = true)
@@ -42,12 +42,12 @@ namespace PointAndClick
             if (Points.Count < 3)
                 return false;
 
-            Vector2 oldPoint = Points[Points.Count - 1].Position;
+            Vector2 oldPoint = Points[Points.Count - 1];
             float oldSqDist = Helpers.DistanceSquared(oldPoint, point);
 
             for (int i = 0; i < Points.Count; i++)
             {
-                Vector2 newPoint = Points[i].Position;
+                Vector2 newPoint = Points[i];
                 float newSqDist = Helpers.DistanceSquared(newPoint, point);
 
                 if (oldSqDist + newSqDist + 2.0f * Mathf.Sqrt(oldSqDist * newSqDist) - Helpers.DistanceSquared(newPoint, oldPoint) < epsilon)
@@ -78,6 +78,39 @@ namespace PointAndClick
 
             return isInside;
         }
+
+        public Vector2 GetClosestPointOnEdge(Vector2 p)
+        {
+            int vi1 = -1;
+            int vi2 = -1;
+
+            float minDist = Mathf.Infinity;
+
+            for (int i = 0; i < Points.Count; i++)
+            {
+                int j = Helpers.ClampListIndex(i + 1, Points.Count);
+                var dist = Helpers.DistanceToSegment(p, Points[i], Points[j]);
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    vi1 = i;
+                    vi2 = j;
+                }
+            }
+
+            var p1 = Points[vi1];
+            var p2 = Points[vi2];
+
+            float u = (((p.x - p1.x) * (p2.x - p1.x)) + ((p.y - p1.y) * (p2.y - p1.y))) / (((p2.x - p1.x) * (p2.x - p1.x)) + ((p2.y - p1.y) * (p2.y - p1.y)));
+
+            if (u < 0) return new Vector2(p1.x, p1.y);
+            else if (u > 1) return new Vector2(p2.x, p2.y);
+
+            float xu = p1.x + u * (p2.x - p1.x);
+            float yu = p1.y + u * (p2.y - p1.y);
+
+            return new Vector2(xu, yu);
+        }
     }
 
 
@@ -86,7 +119,7 @@ namespace PointAndClick
     public class PolygonEditor : Editor
     {
         Polygon _polygonCreator;
-        List<Vertex> _points;
+        List<Vector2> _points;
 
         float _segmentSelectDistanceThreshold;
         int selectedSegmentIndex = -1;
@@ -102,19 +135,18 @@ namespace PointAndClick
         {
             Event guiEvent = Event.current;
             Vector2 mousePos = HandleUtility.GUIPointToWorldRay(guiEvent.mousePosition).origin;
-            Vertex vertex = new Vertex(mousePos);
             // adding points
             if (guiEvent.type == EventType.MouseDown && guiEvent.button == 0 && guiEvent.shift)
             {
                 if (selectedSegmentIndex != -1)
                 {
                     Undo.RecordObject(_polygonCreator, "Split Point");
-                    _polygonCreator.SplitSegment(vertex, selectedSegmentIndex);
+                    _polygonCreator.SplitSegment(mousePos, selectedSegmentIndex);
                 }
                 else
                 {
                     Undo.RecordObject(_polygonCreator, "Add Point");
-                    _points.Add(vertex);
+                    _points.Add(mousePos);
                 }
             }
 
@@ -125,7 +157,7 @@ namespace PointAndClick
                 float closestDst = _segmentSelectDistanceThreshold;
                 for (int i = 0; i < _points.Count; i++)
                 {
-                    float dst = Vector2.Distance(mousePos, _points[i].Position);
+                    float dst = Vector2.Distance(mousePos, _points[i]);
                     if (dst < closestDst)
                     {
                         closestDst = dst;
@@ -150,7 +182,7 @@ namespace PointAndClick
 
                 for (int i = 0; i < _points.Count; i++)
                 {
-                    float currentClstDst = HandleUtility.DistancePointToLineSegment(mousePos, _points[i].Position, _points[Helpers.ClampListIndex(i + 1, _points.Count)].Position);
+                    float currentClstDst = HandleUtility.DistancePointToLineSegment(mousePos, _points[i], _points[Helpers.ClampListIndex(i + 1, _points.Count)]);
                     if (currentClstDst < minDstToSegment)
                     {
                         minDstToSegment = currentClstDst;
@@ -177,8 +209,8 @@ namespace PointAndClick
                 if (_polygonCreator.displayControlPoints)
                 {
                     Handles.color = _polygonCreator.ControlCol;
-                    Vector2 newPos = Handles.FreeMoveHandle(_points[i].Position, Quaternion.identity, _polygonCreator.ControlPointDiameter, Vector2.zero, Handles.CylinderHandleCap);
-                    if (_points[i].Position != newPos)
+                    Vector2 newPos = Handles.FreeMoveHandle(_points[i], Quaternion.identity, _polygonCreator.ControlPointDiameter, Vector2.zero, Handles.CylinderHandleCap);
+                    if (_points[i] != newPos)
                     {
                         Undo.RecordObject(_polygonCreator, "Move Points");
                         _polygonCreator.MovePoint(i, newPos);
@@ -186,7 +218,7 @@ namespace PointAndClick
                 }
                 // draw lines
                 Handles.color = segmentCol;
-                Handles.DrawLine(_points[i].Position, _points[Helpers.ClampListIndex(i + 1, _points.Count)].Position);
+                Handles.DrawLine(_points[i], _points[Helpers.ClampListIndex(i + 1, _points.Count)]);
             }
         }
 
