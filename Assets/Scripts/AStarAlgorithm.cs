@@ -20,12 +20,13 @@ namespace PointAndClick
             _start = start;
             _end = end;
 
-            int sizeGraph = _graph.Nodes.Count;
-
-            _gCosts.Capacity = sizeGraph;
-            _fCosts.Capacity = sizeGraph;
-            _shortestPathTree.Capacity = sizeGraph;
-            _searchFrontier.Capacity = sizeGraph;
+            for (int i = 0; i < _graph.Nodes.Count; i++)
+            {
+                _shortestPathTree.Add(null);
+                _searchFrontier.Add(null);
+                _gCosts.Add(0.0f);
+                _fCosts.Add(0.0f);
+            }
 
             Search();
         }

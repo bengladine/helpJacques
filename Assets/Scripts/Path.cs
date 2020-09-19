@@ -12,14 +12,8 @@ namespace PointAndClick
         // Start is called before the first frame update
         void Start()
         {
-            if (_walkablePoly == null)
-                Debug.LogError("No walkable polygon added!");
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-
+          //  if (_walkablePoly == null)
+            //    Debug.LogError("No walkable polygon added!");
         }
 
 

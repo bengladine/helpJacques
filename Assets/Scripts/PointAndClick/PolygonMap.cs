@@ -4,12 +4,22 @@ using UnityEngine;
 
 namespace PointAndClick
 {
-    public class PolygonMap : MonoBehaviour
+    public class PolygonMap
     {
         private Graph _mainWalkGraph;
-        // Start is called before the first frame update
-        public List<Polygon> Polygons = new List<Polygon>();
+        private List<Polygon> Polygons = new List<Polygon>();
         private List<Vector2> _concaveVertices = new List<Vector2>();
+
+        public PolygonMap(List<Polygon> polygons)
+        {
+            Polygons = polygons;
+            CreateGraph();
+        }
+
+        public Vector2 GetTarget(int nodeIndex)
+        {
+            return _mainWalkGraph.Nodes[nodeIndex].Vertex;
+        }
 
         private bool IsInLineOfSight(Vector2 start, Vector2 end)
         {
@@ -54,7 +64,7 @@ namespace PointAndClick
             return true;
         }
 
-        public void CreateGraph()
+        private void CreateGraph()
         {
             _mainWalkGraph = new Graph();
 

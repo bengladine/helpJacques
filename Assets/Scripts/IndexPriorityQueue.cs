@@ -33,11 +33,25 @@ public class IndexPriorityQueue
 
     public void ReorderUp()
     {
-        _data.Sort((x, y) =>
+        //_data.Sort((x, y) =>
+        //{
+        //    if (_keys[_data[x]] > _keys[_data[y]]) return -1;
+        //    return 0;
+        //});
+
+        int a = _data.Count - 1;
+        while (a > 0)
         {
-            if (_keys[_data[x]] > _keys[_data[y]]) return -1;
-            return 0;
-        });
+            if (_keys[_data[a]] < _keys[_data[a - 1]])
+            {
+                int tmp = _data[a];
+                _data[a] = _data[a - 1];
+                _data[a - 1] = tmp;
+            }
+            // else return;
+            a--;
+        }
+
         //for (int i = _data.Count - 1; i > 0; i--)
         //{
         //    if (_keys[_data[i]] < _keys[_data[i - 1]])
@@ -51,11 +65,22 @@ public class IndexPriorityQueue
 
     public void ReorderDown()
     {
-        _data.Sort((x, y) =>
+        for (int i = 0; i < _data.Count - 1; i++)
         {
-            if (_keys[_data[x]] > _keys[_data[y]]) return 1;
-            return 0;
-        });
+            if (_keys[_data[i]] > _keys[_data[i + 1]])
+            {
+                int tmp = _data[i];
+                _data[i] = _data[i + 1];
+                _data[i + 1] = tmp;
+            }
+        }
+
+
+        //_data.Sort((x, y) =>
+        //{
+        //    if (_keys[_data[x]] > _keys[_data[y]]) return 1;
+        //    return 0;
+        //});
     }
 
     public bool IsEmpty()
