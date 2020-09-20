@@ -25,6 +25,7 @@ public class IndexPriorityQueue
         {
             var first = _data[0];
             _data.RemoveAt(0);
+            ReorderDown();
             return first;
         }
         Debug.LogError("Empty dataset!");
@@ -48,7 +49,7 @@ public class IndexPriorityQueue
                 _data[a] = _data[a - 1];
                 _data[a - 1] = tmp;
             }
-            // else return;
+           //  else return;
             a--;
         }
 
@@ -73,6 +74,7 @@ public class IndexPriorityQueue
                 _data[i] = _data[i + 1];
                 _data[i + 1] = tmp;
             }
+         //   else return;
         }
 
 

@@ -7,33 +7,41 @@ using PointAndClick;
 
 public class Manager : MonoBehaviour
 {
-    public List<Polygon> ListOfColliderPolygons;
+    public Path Path;
+    private List<Polygon> _listOfColliderPolygons = null;
 
-    private void OnEnable()
-    {
-        SceneManager.sceneLoaded += OnSceneLoaded;
-    }
+    //private void OnEnable()
+    //{
+    //    SceneManager.sceneLoaded += OnSceneLoaded;
+    //}
 
     private void Awake()
     {
-        if (ListOfColliderPolygons.Count > 0)
+        if (Path.WalkablePoly != null)
         {
-            CollisionManager.Instance.PolygonMap = new PolygonMap(ListOfColliderPolygons);
+            _listOfColliderPolygons = new List<Polygon>() { Path.WalkablePoly };
+            for (int i = 0; i < Path.ObstaclePolygons.Count; i++)
+            {
+                _listOfColliderPolygons.Add(Path.ObstaclePolygons[i]);
+            }
+            CollisionManager.Instance.PolygonMap = new PolygonMap(_listOfColliderPolygons);
         }
         else Debug.LogError("No colliders attached, did you forget to add them to the manager?");
     }
 
-    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        //if (ListOfColliderPolygons.Count > 0)
-        //{
-        //    Instance.PolygonMap = new PolygonMap(ListOfColliderPolygons);
-        //}
-        //else Debug.LogError("No colliders attached, did you forget to add them to the manager?");
-    }
 
-    void OnDisable()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-    }
+
+    //void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    //{
+    //    //if (ListOfColliderPolygons.Count > 0)
+    //    //{
+    //    //    Instance.PolygonMap = new PolygonMap(ListOfColliderPolygons);
+    //    //}
+    //    //else Debug.LogError("No colliders attached, did you forget to add them to the manager?");
+    //}
+
+    //void OnDisable()
+    //{
+    //    SceneManager.sceneLoaded -= OnSceneLoaded;
+    //}
 }

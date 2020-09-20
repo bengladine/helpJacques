@@ -36,7 +36,6 @@ namespace PointAndClick
 
         public bool IsPointInPolygon(Vector2 point, bool toleranceOutside = true)
         {
-            float epsilon = 0.5f;
             bool isInside = false;
             // if polygon has less than three points it's always outside
             if (Points.Count < 3)
@@ -50,7 +49,7 @@ namespace PointAndClick
                 Vector2 newPoint = Points[i];
                 float newSqDist = Helpers.DistanceSquared(newPoint, point);
 
-                if (oldSqDist + newSqDist + 2.0f * Mathf.Sqrt(oldSqDist * newSqDist) - Helpers.DistanceSquared(newPoint, oldPoint) < epsilon)
+                if (oldSqDist + newSqDist + 2.0f * Mathf.Sqrt(oldSqDist * newSqDist) - Helpers.DistanceSquared(newPoint, oldPoint) < float.Epsilon)
                     return toleranceOutside;
 
                 Vector2 left;
@@ -111,6 +110,17 @@ namespace PointAndClick
 
             return new Vector2(xu, yu);
         }
+
+
+        // debug function
+        public void DrawPolygon(Color color = default)
+        {
+            for (int i = 0; i < Points.Count; i++)
+            {
+                Debug.DrawLine(Points[i], Points[(i + 1) % Points.Count], color);
+            }
+        }
+
     }
 
 
@@ -219,7 +229,7 @@ namespace PointAndClick
                 // draw lines
                 Handles.color = segmentCol;
                 Handles.DrawLine(_points[i], _points[Helpers.ClampListIndex(i + 1, _points.Count)]);
-            }
+            }   
         }
 
         private void OnSceneGUI()

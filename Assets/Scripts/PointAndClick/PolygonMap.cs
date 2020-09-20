@@ -7,6 +7,7 @@ namespace PointAndClick
     public class PolygonMap
     {
         private Graph _mainWalkGraph;
+        private Graph _walkGraph;
         private List<Polygon> Polygons = new List<Polygon>();
         private List<Vector2> _concaveVertices = new List<Vector2>();
 
@@ -18,23 +19,20 @@ namespace PointAndClick
 
         public Vector2 GetTarget(int nodeIndex)
         {
-            return _mainWalkGraph.Nodes[nodeIndex].Vertex;
+            return _walkGraph.Nodes[nodeIndex].Vertex;
         }
 
         private bool IsInLineOfSight(Vector2 start, Vector2 end)
         {
-            float epsilon = 0.5f;
-
             // if start or end is outside of polygon
             if (!Polygons[0].IsPointInPolygon(start) || !Polygons[0].IsPointInPolygon(end))
                 return false;
 
             // if start and end are the same or too close to eachother
-            if (Vector2.Distance(start, end) < epsilon)
+            if (Vector2.Distance(start, end) < float.Epsilon)
                 return false;
 
             // not in LOS if any edge is internsected by the start-end line segment
-            bool isInSight = true;
             foreach (var polygon in Polygons)
             {
                 for (int i = 0; i < polygon.Points.Count; i++)
@@ -102,13 +100,7 @@ namespace PointAndClick
 
         public List<int> CalculatePath(Vector2 start, Vector2 end)
         {
-             var walkGraph = new Graph(_mainWalkGraph);
-
-            float minDistanceFrom = Mathf.Infinity;
-            float minDistanceTo = Mathf.Infinity;
-
-            // create new node on start position
-            int startNodeIndex = walkGraph.Nodes.Count;
+            _walkGraph = _mainWalkGraph.Clone();
 
             if (!Polygons[0].IsPointInPolygon(start))
             {
@@ -119,7 +111,7 @@ namespace PointAndClick
                 end = Polygons[0].GetClosestPointOnEdge(end);
             }
 
-            // are there more polygons? Then check if endpoint is inside one of them and ifind closest point on edge
+            // are there more polygons? Then check if endpoint is inside one of them and if so find closest point on edge
             if (Polygons.Count > 1)
             {
                 for (int i = 1; i < Polygons.Count; i++)
@@ -132,33 +124,40 @@ namespace PointAndClick
                 }
             }
 
-            var startNode = new Node(new Vector2(start.x, start.y));
-            walkGraph.AddNode(startNode);
-
-            for (int i = 0; i < _concaveVertices.Count; i++)
-            {
-                var c = _concaveVertices[i];
-                if (IsInLineOfSight(start, c))
-                    walkGraph.AddEdge(new Edge(startNodeIndex, i, Helpers.Distance(start, c)));
-            }
+            // create new node on start position
+            int startNodeIndex = _walkGraph.Nodes.Count;
+            var startNode = new Node(start);
+            _walkGraph.AddNode(startNode);
 
             //create new node on endposition
-            int endNodeIndex = walkGraph.Nodes.Count;
-
+            int endNodeIndex = _walkGraph.Nodes.Count;
             var endNode = new Node(end);
-            walkGraph.AddNode(endNode);
-
-            for (int i = 0; i < _concaveVertices.Count; i++)
-            {
-                var c = _concaveVertices[i];
-                if (IsInLineOfSight(end, c))
-                    walkGraph.AddEdge(new Edge(i, endNodeIndex, Helpers.Distance(end, c)));
-            }
+            _walkGraph.AddNode(endNode);
 
             if (IsInLineOfSight(start, end))
-                walkGraph.AddEdge(new Edge(startNodeIndex, endNodeIndex, Helpers.Distance(start, end)));
+            {
+                _walkGraph.AddEdge(new Edge(startNodeIndex, endNodeIndex, Helpers.Distance(start, end)));
+            }
+            else
+            {
+                for (int i = 0; i < _concaveVertices.Count; i++)
+                {
+                    var c = _concaveVertices[i];
+                    if (IsInLineOfSight(start, c))
+                        _walkGraph.AddEdge(new Edge(startNodeIndex, i, Helpers.Distance(start, c)));
+                }
 
-            var aStar = new AStarAlgorithm(walkGraph, startNodeIndex, endNodeIndex);
+
+
+                for (int i = 0; i < _concaveVertices.Count; i++)
+                {
+                    var c = _concaveVertices[i];
+                    if (IsInLineOfSight(end, c))
+                        _walkGraph.AddEdge(new Edge(i, endNodeIndex, Helpers.Distance(end, c)));
+                }
+            }
+
+            var aStar = new AStarAlgorithm(_walkGraph, startNodeIndex, endNodeIndex);
             return aStar.GetPath();
         }
     }

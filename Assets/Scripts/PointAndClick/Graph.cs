@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,7 +14,7 @@ namespace PointAndClick
             Vertex = vertex;
         }
     }
-    public class Graph : MonoBehaviour
+    public class Graph
     {
         public Graph()
         {
@@ -67,7 +68,16 @@ namespace PointAndClick
             Edges.Add(new List<Edge>());
         }
 
+        public Graph Clone()
+        {
+            var graph = new Graph();
+            graph.Polygons = new List<Polygon>(Polygons);
+            graph._concaveVertices =  new List<Vector2>(_concaveVertices);
+            graph.Nodes = new List<Node>(Nodes);
+            graph.Edges = new List<List<Edge>>(Edges);
 
+            return graph;
+        }
     }
 }
 
