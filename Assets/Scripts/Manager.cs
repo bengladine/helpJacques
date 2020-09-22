@@ -10,12 +10,19 @@ public class Manager : MonoBehaviour
     public Path Path;
     private List<Polygon> _listOfColliderPolygons = null;
 
-    //private void OnEnable()
-    //{
-    //    SceneManager.sceneLoaded += OnSceneLoaded;
-    //}
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
 
     private void Awake()
+    {
+
+    }
+
+
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (Path.WalkablePoly != null)
         {
@@ -27,21 +34,15 @@ public class Manager : MonoBehaviour
             CollisionManager.Instance.PolygonMap = new PolygonMap(_listOfColliderPolygons);
         }
         else Debug.LogError("No colliders attached, did you forget to add them to the manager?");
+        //if (ListOfColliderPolygons.Count > 0)
+        //{
+        //    Instance.PolygonMap = new PolygonMap(ListOfColliderPolygons);
+        //}
+        //else Debug.LogError("No colliders attached, did you forget to add them to the manager?");
     }
 
-
-
-    //void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    //{
-    //    //if (ListOfColliderPolygons.Count > 0)
-    //    //{
-    //    //    Instance.PolygonMap = new PolygonMap(ListOfColliderPolygons);
-    //    //}
-    //    //else Debug.LogError("No colliders attached, did you forget to add them to the manager?");
-    //}
-
-    //void OnDisable()
-    //{
-    //    SceneManager.sceneLoaded -= OnSceneLoaded;
-    //}
+    void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
 }

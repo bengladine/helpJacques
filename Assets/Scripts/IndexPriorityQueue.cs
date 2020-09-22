@@ -24,7 +24,8 @@ public class IndexPriorityQueue
         if (_data.Count > 0)
         {
             var first = _data[0];
-            _data.RemoveAt(0);
+            _data[0] = _data[_data.Count - 1];
+            _data.RemoveAt(_data.Count - 1);
             ReorderDown();
             return first;
         }
@@ -49,7 +50,7 @@ public class IndexPriorityQueue
                 _data[a] = _data[a - 1];
                 _data[a - 1] = tmp;
             }
-           //  else return;
+        //    else return;
             a--;
         }
 
@@ -74,7 +75,7 @@ public class IndexPriorityQueue
                 _data[i] = _data[i + 1];
                 _data[i + 1] = tmp;
             }
-         //   else return;
+           // else return;
         }
 
 

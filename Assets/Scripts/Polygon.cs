@@ -19,6 +19,35 @@ namespace PointAndClick
         public float ControlPointDiameter = 0.075f;
         public bool displayControlPoints = true;
 
+        public Vector4 BoundingBox = new Vector4();
+
+        private void Awake()
+        {
+           BoundingBox = CreateBoundingBox();
+        }
+
+        public Vector4 CreateBoundingBox()
+        {
+            float mostLeft = Mathf.Infinity;
+            float mostRight = -Mathf.Infinity;
+            float mostUp = -Mathf.Infinity;
+            float mostDown = Mathf.Infinity;
+
+            foreach (var point in Points)
+            {
+                if (point.x < mostLeft)
+                    mostLeft = point.x;
+                if (point.x > mostRight)
+                    mostRight = point.x;
+                if (point.y < mostDown)
+                    mostDown = point.y;
+                if (point.y > mostUp)
+                    mostUp = point.y;
+            }
+
+            return new Vector4(mostLeft, mostDown, mostRight, mostUp);
+        }
+
         public void SplitSegment(Vector2 anchorPos, int segmentIndex)
         {
             Points.Insert(segmentIndex + 1, anchorPos);
@@ -34,49 +63,73 @@ namespace PointAndClick
             Points[index] = pos;
         }
 
-        public bool IsPointInPolygon(Vector2 point, bool toleranceOutside = true)
+        // source https://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon
+        public bool IsPointInPolygon(Vector2 point)
         {
-            bool isInside = false;
-            // if polygon has less than three points it's always outside
-            if (Points.Count < 3)
-                return false;
+            int intersections = 0;
 
-            Vector2 oldPoint = Points[Points.Count - 1];
-            float oldSqDist = Helpers.DistanceSquared(oldPoint, point);
+            Vector2 rayv1 = new Vector2(BoundingBox.x - 0.01f, point.y);
+            Vector2 rayv2 = point;
+
 
             for (int i = 0; i < Points.Count; i++)
             {
-                Vector2 newPoint = Points[i];
-                float newSqDist = Helpers.DistanceSquared(newPoint, point);
+                var p1 = Points[i];
+                var p2 = Points[(i + 1) % Points.Count];
 
-                if (oldSqDist + newSqDist + 2.0f * Mathf.Sqrt(oldSqDist * newSqDist) - Helpers.DistanceSquared(newPoint, oldPoint) < float.Epsilon)
-                    return toleranceOutside;
 
-                Vector2 left;
-                Vector2 right;
-
-                if (newPoint.x > oldPoint.x)
-                {
-                    left = oldPoint;
-                    right = newPoint;
-                }
-                else
-                {
-                    left = newPoint;
-                    right = oldPoint;
-                }
-
-                if (left.x < point.x && point.x <= right.x && (point.y - left.y) * (right.x - left.x) < (right.y - left.y) * (point.x - left.x))
-                {
-                    isInside = !isInside;
-                }
-
-                oldPoint = newPoint;
-                oldSqDist = newSqDist;
+                if (Helpers.AreIntersecting(rayv1.x, rayv1.y, rayv2.x, rayv2.y, p1.x, p1.y, p2.x, p2.y))
+                    intersections++;
             }
 
-            return isInside;
+            if ((intersections & 1) == 1)
+                return true;
+            return false;
         }
+
+        //public bool IsPointInPolygon(Vector2 point, bool toleranceOutside = true)
+        //{
+        //    bool isInside = false;
+        //    // if polygon has less than three points it's always outside
+        //    if (Points.Count < 3)
+        //        return false;
+
+        //    Vector2 oldPoint = Points[Points.Count - 1];
+        //    float oldSqDist = Helpers.DistanceSquared(oldPoint, point);
+
+        //    for (int i = 0; i < Points.Count; i++)
+        //    {
+        //        Vector2 newPoint = Points[i];
+        //        float newSqDist = Helpers.DistanceSquared(newPoint, point);
+
+        //        if (oldSqDist + newSqDist + 2.0f * Mathf.Sqrt(oldSqDist * newSqDist) - Helpers.DistanceSquared(newPoint, oldPoint) < 0.5f)
+        //            return toleranceOutside;
+
+        //        Vector2 left;
+        //        Vector2 right;
+
+        //        if (newPoint.x > oldPoint.x)
+        //        {
+        //            left = oldPoint;
+        //            right = newPoint;
+        //        }
+        //        else
+        //        {
+        //            left = newPoint;
+        //            right = oldPoint;
+        //        }
+
+        //        if (left.x < point.x && point.x <= right.x && (point.y - left.y) * (right.x - left.x) < (right.y - left.y) * (point.x - left.x))
+        //        {
+        //            isInside = !isInside;
+        //        }
+
+        //        oldPoint = newPoint;
+        //        oldSqDist = newSqDist;
+        //    }
+
+        //    return isInside;
+        //}
 
         public Vector2 GetClosestPointOnEdge(Vector2 p)
         {
@@ -130,7 +183,7 @@ namespace PointAndClick
     {
         Polygon _polygonCreator;
         List<Vector2> _points;
-
+        Vector4 _boundingBox;
         float _segmentSelectDistanceThreshold;
         int selectedSegmentIndex = -1;
 
@@ -139,6 +192,7 @@ namespace PointAndClick
             _polygonCreator = (Polygon)target;
             _points = _polygonCreator.Points;
             _segmentSelectDistanceThreshold = 0.05f;
+            _boundingBox = _polygonCreator.BoundingBox;
         }
 
         private void Input()
@@ -236,10 +290,16 @@ namespace PointAndClick
         {
             // detect if LMB is pressed down
             Input();
+            UpdateBoundingBox();
             serializedObject.ApplyModifiedProperties();
 
             Draw();
             Selection.activeGameObject = _polygonCreator.gameObject;
+        }
+
+        private void UpdateBoundingBox()
+        {
+            _boundingBox = _polygonCreator.CreateBoundingBox();
         }
 
         public override void OnInspectorGUI()

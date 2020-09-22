@@ -6,14 +6,6 @@ using UnityEngine;
 
 namespace PointAndClick
 {
-    public class Node
-    {
-        public Vector2 Vertex;
-        public Node(Vector2 vertex)
-        {
-            Vertex = vertex;
-        }
-    }
     public class Graph
     {
         public Graph()
@@ -74,7 +66,12 @@ namespace PointAndClick
             graph.Polygons = new List<Polygon>(Polygons);
             graph._concaveVertices =  new List<Vector2>(_concaveVertices);
             graph.Nodes = new List<Node>(Nodes);
-            graph.Edges = new List<List<Edge>>(Edges);
+            graph.Edges = new List<List<Edge>>();
+
+            foreach (var edge in Edges)
+            {
+                graph.Edges.Add(new List<Edge>(edge));
+            }
 
             return graph;
         }
