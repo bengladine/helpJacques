@@ -66,14 +66,44 @@ public class Helpers
         return (val > 0) ? 1 : 2;
     }
 
-    static private bool OnSegment(Vector2 p, Vector2 q, Vector2 r)
-    {
-        if (q.x <= Math.Max(p.x, r.x) && q.x >= Math.Min(p.x, r.x) &&
-    q.y <= Math.Max(p.y, r.y) && q.y >= Math.Min(p.y, r.y))
-            return true;
+    //static public bool OnSegment(Vector2 p1, Vector2 q, Vector2 p2)
+    //{
+    //    if (q.x <= Math.Max(p1.x, p2.x) && q.x >= Math.Min(p1.x, p2.x) &&
+    //q.y <= Math.Max(p1.y, p2.y) && q.y >= Math.Min(p1.y, p2.y))
+    //        return true;
 
-        return false;
+    //    return false;
+    //}
+
+    static public bool OnSegment(Vector2 p1, Vector2 p2, Vector2 q)
+    {
+        var crossProduct = (q.y - p1.y) * (p2.x - p1.x) - (q.x - p1.x) * (p2.y - p1.y);
+
+        if (Mathf.Abs(crossProduct) > float.Epsilon)
+            return false;
+
+        var dotProduct = (q.x - p1.x) * (p2.x - p1.x) + (q.y - p1.y) * (p2.y - p1.y);
+        if (dotProduct < 0.0f)
+            return false;
+
+        var squaredLengthBA = (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y);
+
+        if (dotProduct > squaredLengthBA)
+            return false;
+
+        return true;
     }
+
+    //static public bool OnSegment(Vector2 p1, Vector2 p2, Vector2 q)
+    //{
+    //   var distp1p2 = Vector2.Distance(p1, p2);
+    //    var distp1q = Vector2.Distance(p1, q);
+    //    var distp2q = Vector2.Distance(p2, q);
+
+    //    if (distp1q + distp2q - distp1p2 > -float.Epsilon && distp1q + distp2q - distp1p2 < float.Epsilon)
+    //        return true;
+    //    return false;
+    //}
 
 
     // source : https://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon
@@ -102,7 +132,7 @@ public class Helpers
         if (d1 > 0 && d2 > 0) return false;
         if (d1 < 0 && d2 < 0) return false;
 
-        if ((a1 * b2) - (a2 * b1) == 0.0f) 
+        if ((a1 * b2) - (a2 * b1) == 0.0f)
             return false;
 
         return true;

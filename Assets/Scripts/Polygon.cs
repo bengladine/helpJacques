@@ -23,7 +23,7 @@ namespace PointAndClick
 
         private void Awake()
         {
-           BoundingBox = CreateBoundingBox();
+            BoundingBox = CreateBoundingBox();
         }
 
         public Vector4 CreateBoundingBox()
@@ -76,7 +76,6 @@ namespace PointAndClick
             {
                 var p1 = Points[i];
                 var p2 = Points[(i + 1) % Points.Count];
-
 
                 if (Helpers.AreIntersecting(rayv1.x, rayv1.y, rayv2.x, rayv2.y, p1.x, p1.y, p2.x, p2.y))
                     intersections++;
@@ -131,7 +130,7 @@ namespace PointAndClick
         //    return isInside;
         //}
 
-        public Vector2 GetClosestPointOnEdge(Vector2 p)
+        public Vector2 GetClosestPointOnEdge(Vector2 p, bool pointMustBeOut)
         {
             int vi1 = -1;
             int vi2 = -1;
@@ -155,13 +154,44 @@ namespace PointAndClick
 
             float u = (((p.x - p1.x) * (p2.x - p1.x)) + ((p.y - p1.y) * (p2.y - p1.y))) / (((p2.x - p1.x) * (p2.x - p1.x)) + ((p2.y - p1.y) * (p2.y - p1.y)));
 
-            if (u < 0) return new Vector2(p1.x, p1.y);
-            else if (u > 1) return new Vector2(p2.x, p2.y);
+            Vector2 newPoint = new Vector2();
 
-            float xu = p1.x + u * (p2.x - p1.x);
-            float yu = p1.y + u * (p2.y - p1.y);
+            if (u < 0)
+            {
+                newPoint = new Vector2(p1.x, p1.y);
+            }
+            else if (u > 1)
+            {
+                newPoint = new Vector2(p2.x, p2.y);
+            }
+            else
+            {
+                float xu = p1.x + u * (p2.x - p1.x);
+                float yu = p1.y + u * (p2.y - p1.y);
+                newPoint = new Vector2(xu, yu);
+            }
 
-            return new Vector2(xu, yu);
+            float angle = 0.0f;
+            var originalValue = newPoint;
+            float tolerance = 0.001f;
+            int counter = 0;
+
+            // sometimes the point can still be in the polygon when it's on an edge, we want to avoid that so we move the point in a radial matter.
+
+            while(IsPointInPolygon(newPoint) == pointMustBeOut)
+            {
+                newPoint = originalValue;
+                newPoint.x += Mathf.Cos(angle) * tolerance;      
+                newPoint.y += Mathf.Sin(angle) * tolerance;
+                angle += Mathf.PI / 2.0f;
+                counter++;
+                if (counter % 4 == 0)
+                    tolerance *= 2;
+            }
+
+            //Vector2 dirTranslation = (newPoint - p).normalized;
+            //newPoint += dirTranslation * 0.1f;
+            return newPoint;
         }
 
 
@@ -283,7 +313,7 @@ namespace PointAndClick
                 // draw lines
                 Handles.color = segmentCol;
                 Handles.DrawLine(_points[i], _points[Helpers.ClampListIndex(i + 1, _points.Count)]);
-            }   
+            }
         }
 
         private void OnSceneGUI()

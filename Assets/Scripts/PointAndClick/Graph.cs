@@ -65,7 +65,13 @@ namespace PointAndClick
             var graph = new Graph();
             graph.Polygons = new List<Polygon>(Polygons);
             graph._concaveVertices =  new List<Vector2>(_concaveVertices);
-            graph.Nodes = new List<Node>(Nodes);
+            graph.Nodes = new List<Node>();
+
+            foreach (var node in Nodes)
+            {
+                graph.Nodes.Add(node.Clone());
+            }
+
             graph.Edges = new List<List<Edge>>();
 
             foreach (var edge in Edges)

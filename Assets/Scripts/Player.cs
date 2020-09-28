@@ -40,7 +40,6 @@ public class Player : MonoBehaviour
             _steps = CollisionManager.Instance.PolygonMap.CalculatePath(transform.position, _target);
 
             _currentTarget = _steps[_currentStep];
-            //_currentTarget = CollisionManager.Instance.PolygonMap.GetTarget(_steps[_currentStep]);
             //   Debug.Log($"Mouse Postion world space after clipped : {_target}");
         }
 
@@ -74,6 +73,24 @@ public class Player : MonoBehaviour
         var endPos = Camera.main.ScreenToWorldPoint(new Vector3(mousePosition.x, mousePosition.y, mousePosition.z));
         endPos = Camera.main.ScreenToWorldPoint(new Vector3(mousePosition.x, mousePosition.y, -Camera.main.gameObject.transform.position.z));
 
+        var polygons = polygonMap.Polygons;
+
+        if (!polygons[0].IsPointInPolygon(endPos))
+        {
+            endPos = polygons[0].GetClosestPointOnEdge(endPos, false);
+            if (!polygons[0].IsPointInPolygon(endPos))
+                Debug.Log("Still not in the polygon dude");
+        }
+
+        for (int i = 1; i < polygons.Count; i++)
+        {
+            if (polygons[i].IsPointInPolygon(endPos))
+            {
+                endPos = polygons[i].GetClosestPointOnEdge(endPos, true);
+            }
+        }
+
+
         foreach (var node in polygonMap._mainWalkGraph.Nodes)
         {
             if (polygonMap.IsInLineOfSight(transform.position, node.Vertex))
@@ -81,13 +98,31 @@ public class Player : MonoBehaviour
                 Debug.DrawLine(transform.position, node.Vertex, Color.cyan);
             }
 
-
-
-            if (polygonMap.IsInLineOfSight(endPos, node.Vertex))
+            if (Input.GetKey(KeyCode.A))
             {
-                Debug.DrawLine(endPos, node.Vertex, Color.blue);
+                if (polygonMap.IsInLineOfSight(endPos, node.Vertex))
+                {
+                    Debug.DrawLine(endPos, node.Vertex, Color.blue);
+                }
+
+                if (_steps != null && _steps.Count > 0 && polygonMap.IsInLineOfSight(_steps[_steps.Count - 1], node.Vertex))
+                {
+                    Debug.DrawLine(_steps[_steps.Count - 1], node.Vertex, Color.red);
+                }
             }
         }
+
+        var steps = CollisionManager.Instance.PolygonMap.CalculatePath(transform.position, endPos);
+
+        Color stepColor = new Color(0.23f, 0.4f, 0.8f);
+        for (int i = 0; i < steps.Count - 1; i++)
+        {
+            var v1 = steps[i];
+            var v2 = steps[(i + 1)];
+
+            Debug.DrawLine(v1, v2, stepColor);
+        }
+
 
         //for (int i = 0; i < polygonMap.Polygons[0].Points.Count; i++)
         //{

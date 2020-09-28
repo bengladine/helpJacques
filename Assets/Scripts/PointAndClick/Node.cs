@@ -11,6 +11,12 @@ public class Node
     public Node Parent;
     public List<Node> Neighbours;
 
+    // if start or end indices are another value than -1 (and positive), this means that the start and/or end node are a neighbour. 
+    // These have to be after every calculation.
+
+    public int startIndex = -1;
+    public int endIndex = -1;
+
     public Node(Vector2 vertex)
     {
         Vertex = vertex;
@@ -21,4 +27,16 @@ public class Node
         Neighbours = new List<Node>();
     }
 
+    public Node Clone()
+    {
+        Node newNode = new Node(Vertex);
+        newNode.IsVisited = false;
+        newNode.Neighbours = new List<Node>();
+        foreach (var node in Neighbours)
+        {
+            newNode.Neighbours.Add(node);
+        }
+
+        return newNode;
+    }
 }

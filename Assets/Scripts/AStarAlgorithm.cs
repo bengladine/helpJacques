@@ -1,12 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using System.Linq;
 namespace PointAndClick
 {
     public class AStarAlgorithm
     {
-        private Graph _graph;
+        private List<Node> _nodes;
         private int _start;
         private int _end;
         private List<Edge> _shortestPathTree = new List<Edge>();
@@ -17,26 +17,26 @@ namespace PointAndClick
         private Node _START;
         private Node _END;
 
-        public AStarAlgorithm(Graph graph, int start, int end)
+        //public AStarAlgorithm(Graph graph, int start, int end)
+        //{
+        //    _graph = graph;
+        //    _start = start;
+        //    _end = end;
+
+        //    for (int i = 0; i < _graph.Nodes.Count; i++)
+        //    {
+        //        _shortestPathTree.Add(null);
+        //        _searchFrontier.Add(null);
+        //        _gCosts.Add(0.0f);
+        //        _fCosts.Add(0.0f);
+        //    }
+
+        //    Search();
+        //}
+
+        public AStarAlgorithm(List<Node> nodes, Node start, Node end)
         {
-            _graph = graph;
-            _start = start;
-            _end = end;
-
-            for (int i = 0; i < _graph.Nodes.Count; i++)
-            {
-                _shortestPathTree.Add(null);
-                _searchFrontier.Add(null);
-                _gCosts.Add(0.0f);
-                _fCosts.Add(0.0f);
-            }
-
-            Search();
-        }
-
-        public AStarAlgorithm(Graph graph, Node start, Node end)
-        {
-            _graph = graph;
+            _nodes = nodes;
             _START = start;
             _END = end;
 
@@ -45,13 +45,12 @@ namespace PointAndClick
 
         private void SolveAStar()
         {
-            var nodes = _graph.Nodes;
-            for (int i = 0; i < nodes.Count; i++)
+            for (int i = 0; i < _nodes.Count; i++)
             {
-                nodes[i].IsVisited = false;
-                nodes[i].GlobalGoal = Mathf.Infinity;
-                nodes[i].LocalGoal = Mathf.Infinity;
-                nodes[i].Parent = null;
+                _nodes[i].IsVisited = false;
+                _nodes[i].GlobalGoal = Mathf.Infinity;
+                _nodes[i].LocalGoal = Mathf.Infinity;
+                _nodes[i].Parent = null;
             }
 
             var currentNode = _START;
@@ -63,11 +62,8 @@ namespace PointAndClick
 
             while (listNotTestedNodes.Count > 0)
             {
-                listNotTestedNodes.Sort((x, y) =>
-                {
-                    if (x.GlobalGoal < y.GlobalGoal) return 0;
-                    return 1;
-                });
+
+                listNotTestedNodes.Sort((x, y) => x.GlobalGoal.CompareTo(y.GlobalGoal));
 
                 while (listNotTestedNodes.Count > 0 && listNotTestedNodes[0].IsVisited)
                     listNotTestedNodes.RemoveAt(0);
@@ -97,39 +93,39 @@ namespace PointAndClick
 
         }
 
-        private void Search()
-        {
-            var pq = new IndexPriorityQueue(_fCosts);
-            pq.Insert(_start);
-            while (!pq.IsEmpty())
-            {
-                int NextClosestNode = pq.Pop();
-                _shortestPathTree[NextClosestNode] = _searchFrontier[NextClosestNode];
-                //  if (NextClosestNode == _end) return;
-                var edges = _graph.Edges[NextClosestNode];
-                foreach (var edge in edges)
-                {
-                    float hCost = (_graph.Nodes[edge.To].Vertex - _graph.Nodes[_end].Vertex).magnitude;
-                    float gCost = _gCosts[NextClosestNode] + edge.Cost;
-                    int to = edge.To;
+        //private void Search()
+        //{
+        //    var pq = new IndexPriorityQueue(_fCosts);
+        //    pq.Insert(_start);
+        //    while (!pq.IsEmpty())
+        //    {
+        //        int NextClosestNode = pq.Pop();
+        //        _shortestPathTree[NextClosestNode] = _searchFrontier[NextClosestNode];
+        //        //  if (NextClosestNode == _end) return;
+        //        var edges = _graph.Edges[NextClosestNode];
+        //        foreach (var edge in edges)
+        //        {
+        //            float hCost = (_graph.Nodes[edge.To].Vertex - _graph.Nodes[_end].Vertex).magnitude;
+        //            float gCost = _gCosts[NextClosestNode] + edge.Cost;
+        //            int to = edge.To;
 
-                    if (_searchFrontier[edge.To] == null)
-                    {
-                        _fCosts[edge.To] = gCost + hCost;
-                        _gCosts[edge.To] = gCost;
-                        pq.Insert(edge.To);
-                        _searchFrontier[edge.To] = edge;
-                    }
-                    else if ((gCost < _gCosts[edge.To]) && (_shortestPathTree[edge.To] == null))
-                    {
-                        _fCosts[edge.To] = gCost + hCost;
-                        _gCosts[edge.To] = gCost;
-                        pq.ReorderUp();
-                        _searchFrontier[edge.To] = edge;
-                    }
-                }
-            }
-        }
+        //            if (_searchFrontier[edge.To] == null)
+        //            {
+        //                _fCosts[edge.To] = gCost + hCost;
+        //                _gCosts[edge.To] = gCost;
+        //                pq.Insert(edge.To);
+        //                _searchFrontier[edge.To] = edge;
+        //            }
+        //            else if ((gCost < _gCosts[edge.To]) && (_shortestPathTree[edge.To] == null))
+        //            {
+        //                _fCosts[edge.To] = gCost + hCost;
+        //                _gCosts[edge.To] = gCost;
+        //                pq.ReorderUp();
+        //                _searchFrontier[edge.To] = edge;
+        //            }
+        //        }
+        //    }
+        //}
 
         //public List<int> GetPath()
         //{

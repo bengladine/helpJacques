@@ -15,12 +15,25 @@ public class Manager : MonoBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    private void Awake()
+    private void Update()
     {
+        if (Input.GetKey(KeyCode.W))
+        {
+            CollisionManager.Instance.PolygonMap.DrawLineOfSight();
+        }
 
+        if (Input.GetKey(KeyCode.D))
+        {
+            CollisionManager.Instance.PolygonMap.DrawNeighbours();
+        }
     }
-
-
+    private void OnDrawGizmos()
+    {
+        if (Input.GetKey(KeyCode.W))
+        {
+            CollisionManager.Instance.PolygonMap.DrawNodes();
+        }
+    }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {

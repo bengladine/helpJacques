@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,19 +8,15 @@ namespace PointAndClick
     public class PolygonMap
     {
         public Graph _mainWalkGraph;
-        private Graph _walkGraph;
         public List<Polygon> Polygons = new List<Polygon>();
         private List<Vector2> _concaveVertices = new List<Vector2>();
 
+        private int _startIndex;
+        private int _endIndex;
         public PolygonMap(List<Polygon> polygons)
         {
             Polygons = polygons;
             CreateGraph();
-        }
-
-        public Vector2 GetTarget(int nodeIndex)
-        {
-            return _walkGraph.Nodes[nodeIndex].Vertex;
         }
 
         public bool IsInLineOfSight(Vector2 start, Vector2 end)
@@ -29,7 +26,7 @@ namespace PointAndClick
             //    return false;
 
             // if start and end are the same or too close to eachother
-            if (Vector2.Distance(start, end) < float.Epsilon)
+            if (Vector2.Distance(start, end) < 0.001f)
                 return true;
 
             // not in LOS if any edge is internsected by the start-end line segment
@@ -39,12 +36,24 @@ namespace PointAndClick
                 {
                     Vector2 v1 = polygon.Points[i];
                     Vector2 v2 = polygon.Points[(i + 1) % polygon.Points.Count];
+
+                    var distStartToSegment = Helpers.DistanceToSegment(start, v1, v2);
+                    var distEndToSegment = Helpers.DistanceToSegment(end, v1, v2);
+                                                         
                     if (Helpers.AreIntersecting(start.x, start.y, end.x, end.y, v1.x, v1.y, v2.x, v2.y))
                     {
-                        if (Helpers.DistanceToSegment(start, v1, v2) > 0.001f && Helpers.DistanceToSegment(end, v1, v2) > 0.001f)
+                        if (distStartToSegment > 0.001f && distEndToSegment > 0.001f)
                         {
                             return false;
                         }
+                        else if (distStartToSegment < 0.001f && distEndToSegment < 0.001f)
+                            return true;
+                    }
+
+                    if ((Helpers.Distance(v1, end) < float.Epsilon || Helpers.Distance(v2, end) < float.Epsilon) &&
+                distStartToSegment < 0.0001f)
+                    {
+                        return true;
                     }
                 }
             }
@@ -57,8 +66,10 @@ namespace PointAndClick
                 if (Polygons[i].IsPointInPolygon(v))
                 {
                     isInside = false;
+                    break;
                 }
             }
+
             return isInside;
         }
 
@@ -84,35 +95,52 @@ namespace PointAndClick
                 firstPoly = false;
             }
 
+
             for (int i = 0; i < _concaveVertices.Count; i++)
             {
                 Vector2 a = _concaveVertices[i];
                 for (int j = 0; j < _concaveVertices.Count; j++)
                 {
                     Vector2 b = _concaveVertices[j];
-                    if (IsInLineOfSight(a, b) && i != j)
+                    if (IsInLineOfSight(a, b) /*|| AreConsecutiveVertices(a, b))*/ && i != j)
                     {
-                        var distance = Vector2.Distance(a, b);
-                        _mainWalkGraph.AddEdge(new Edge(i, j, distance));
                         _mainWalkGraph.Nodes[i].Neighbours.Add(_mainWalkGraph.Nodes[j]);
                     }
                 }
             }
         }
 
+        private bool AreConsecutiveVertices(Vector2 a, Vector2 b)
+        {
+            foreach (var poly in Polygons)
+            {
+                for (int i = 0; i < poly.Points.Count; i++)
+                {
+                    var p1 = poly.Points[i];
+                    var p2 = poly.Points[(i + 1) % poly.Points.Count];
+
+                    if (Vector2.Distance(p1, a) < float.Epsilon && Vector2.Distance(p2, b) < float.Epsilon)
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
         public List<Vector2> CalculatePath(Vector2 start, Vector2 end)
         {
-            _walkGraph = _mainWalkGraph.Clone();
-
             if (!Polygons[0].IsPointInPolygon(start))
             {
-                start = Polygons[0].GetClosestPointOnEdge(start);
+                start = Polygons[0].GetClosestPointOnEdge(start, false);
+                if (!Polygons[0].IsPointInPolygon(start))
+                    Debug.Log("start is still not in big polygon DUDE");
             }
             if (!Polygons[0].IsPointInPolygon(end))
             {
-                end = Polygons[0].GetClosestPointOnEdge(end);
+                end = Polygons[0].GetClosestPointOnEdge(end, false);
+                if (!Polygons[0].IsPointInPolygon(end))
+                    Debug.Log("end is still not in big polygon DUDE");
             }
-
 
             // are there more polygons? Then check if endpoint is inside one of them and if so find closest point on edge
             if (Polygons.Count > 1)
@@ -121,62 +149,136 @@ namespace PointAndClick
                 {
                     if (Polygons[i].IsPointInPolygon(start))
                     {
+                        start = Polygons[i].GetClosestPointOnEdge(start, true);
                         Debug.Log("Start is in polygon dude");
                     }
 
                     if (Polygons[i].IsPointInPolygon(end))
                     {
-                        end = Polygons[i].GetClosestPointOnEdge(end);
+                        end = Polygons[i].GetClosestPointOnEdge(end, true);
+                        if (Polygons[i].IsPointInPolygon(end))
+                        {
+                            Debug.Log("End is still in polygon");
+                        }
                         break;
                     }
                 }
             }
 
             // create new node on start position
-            int startNodeIndex = _walkGraph.Nodes.Count;
+            _startIndex = _mainWalkGraph.Nodes.Count;
             var startNode = new Node(start);
-            _walkGraph.AddNode(startNode);
+            _mainWalkGraph.Nodes.Add(startNode);
 
             //create new node on endposition
-            int endNodeIndex = _walkGraph.Nodes.Count;
+            _endIndex = _mainWalkGraph.Nodes.Count;
             var endNode = new Node(end);
-            _walkGraph.AddNode(endNode);
+            _mainWalkGraph.Nodes.Add(endNode);
 
             if (IsInLineOfSight(start, end))
             {
-                _walkGraph.AddEdge(new Edge(startNodeIndex, endNodeIndex, Helpers.Distance(start, end)));
                 startNode.Neighbours.Add(endNode);
                 endNode.Neighbours.Add(startNode);
             }
             else
             {
-                for (int i = 0; i < _concaveVertices.Count; i++)
+                for (int i = 0; i < _mainWalkGraph.Nodes.Count; i++)
                 {
-                    var c = _concaveVertices[i];
-                    if (IsInLineOfSight(start, c))
+                    var c = _mainWalkGraph.Nodes[i];
+                    if (IsInLineOfSight(start, c.Vertex))
                     {
-                        _walkGraph.AddEdge(new Edge(startNodeIndex, i, Helpers.Distance(start, c)));
-                        startNode.Neighbours.Add(_walkGraph.Nodes[i]);
-                        _walkGraph.Nodes[i].Neighbours.Add(startNode);
+                        startNode.Neighbours.Add(c);
+                        c.Neighbours.Add(startNode);
+                        c.startIndex = c.Neighbours.Count - 1;
                     }
-                }
 
-
-                for (int i = 0; i < _concaveVertices.Count; i++)
-                {
-                    var c = _concaveVertices[i];
-                    if (IsInLineOfSight(end, c))
+                    if (IsInLineOfSight(end, c.Vertex))
                     {
-                        _walkGraph.AddEdge(new Edge(i, endNodeIndex, Helpers.Distance(end, c)));
-                        endNode.Neighbours.Add(_walkGraph.Nodes[i]);
-                        _walkGraph.Nodes[i].Neighbours.Add(endNode);
+                        endNode.Neighbours.Add(c);
+                        c.Neighbours.Add(endNode);
+                        c.endIndex = c.Neighbours.Count - 1;
                     }
                 }
             }
 
-            var aStar = new AStarAlgorithm(_walkGraph, startNode, endNode);
-          //  var aStar = new AStarAlgorithm(_walkGraph, startNodeIndex, endNodeIndex);
+            var aStar = new AStarAlgorithm(_mainWalkGraph.Nodes, startNode, endNode);
+
+            ResetWalkGraph();
+            //  var aStar = new AStarAlgorithm(_walkGraph, startNodeIndex, endNodeIndex);
             return aStar.GetPath();
+        }
+
+        public void DrawLineOfSight()
+        {
+            if (_mainWalkGraph != null)
+            {
+                var nodes = _mainWalkGraph.Nodes;
+                for (int i = 0; i < nodes.Count; ++i)
+                {
+                    var v1 = nodes[i].Vertex;
+
+                    for (int j = 0; j < nodes.Count; j++)
+                    {
+                        var v2 = nodes[j].Vertex;
+                        if ((i != j && IsInLineOfSight(v1, v2)) || AreConsecutiveVertices(v1, v2))
+                        {
+                            Color orange = new Color(1.0f, 0.388f, 0.2784f);
+                            Debug.DrawLine(v1, v2, orange);
+                        }
+                    }
+                }
+            }
+        }
+
+        public void DrawNodes()
+        {
+            if (_mainWalkGraph.Nodes.Count > 0)
+            {
+                foreach (var node in _mainWalkGraph.Nodes)
+                {
+                    Gizmos.color = Color.black;
+                    Gizmos.DrawSphere(node.Vertex, 0.05f);
+                }
+            }
+        }
+
+        public void DrawNeighbours()
+        {
+            if (_mainWalkGraph != null)
+            {
+                foreach (var node in _mainWalkGraph.Nodes)
+                {
+                    foreach (var neighbour in node.Neighbours)
+                    {
+                        Debug.DrawLine(node.Vertex, neighbour.Vertex, Color.black);
+                    }
+                }
+            }
+        }
+
+        private void ResetWalkGraph()
+        {
+            if (_startIndex >= 0 && _endIndex >= 0)
+            {
+                _mainWalkGraph.Nodes.RemoveAt(_endIndex);
+                _mainWalkGraph.Nodes.RemoveAt(_startIndex);
+            }
+
+            foreach (var node in _mainWalkGraph.Nodes)
+            {
+                if (node.endIndex >= 0)
+                {
+                    node.Neighbours.RemoveAt(node.endIndex);
+                    node.endIndex = -1;
+                }
+
+                if (node.startIndex >= 0)
+                {
+                    node.Neighbours.RemoveAt(node.startIndex);
+                    node.startIndex = -1;
+                }
+            }
+
         }
     }
 }
