@@ -102,7 +102,7 @@ namespace PointAndClick
                 for (int j = 0; j < _concaveVertices.Count; j++)
                 {
                     Vector2 b = _concaveVertices[j];
-                    if (IsInLineOfSight(a, b) /*|| AreConsecutiveVertices(a, b))*/ && i != j)
+                    if (IsInLineOfSight(a, b) && i != j)
                     {
                         _mainWalkGraph.Nodes[i].Neighbours.Add(_mainWalkGraph.Nodes[j]);
                     }
@@ -132,36 +132,32 @@ namespace PointAndClick
             if (!Polygons[0].IsPointInPolygon(start))
             {
                 start = Polygons[0].GetClosestPointOnEdge(start, false);
-                if (!Polygons[0].IsPointInPolygon(start))
-                    Debug.Log("start is still not in big polygon DUDE");
             }
             if (!Polygons[0].IsPointInPolygon(end))
             {
                 end = Polygons[0].GetClosestPointOnEdge(end, false);
-                if (!Polygons[0].IsPointInPolygon(end))
-                    Debug.Log("end is still not in big polygon DUDE");
             }
 
             // are there more polygons? Then check if endpoint is inside one of them and if so find closest point on edge
             if (Polygons.Count > 1)
             {
+                bool startChanged = false;
+                bool endChanged = false;
                 for (int i = 1; i < Polygons.Count; i++)
                 {
                     if (Polygons[i].IsPointInPolygon(start))
                     {
                         start = Polygons[i].GetClosestPointOnEdge(start, true);
-                        Debug.Log("Start is in polygon dude");
+                        startChanged = true;
                     }
 
                     if (Polygons[i].IsPointInPolygon(end))
                     {
                         end = Polygons[i].GetClosestPointOnEdge(end, true);
-                        if (Polygons[i].IsPointInPolygon(end))
-                        {
-                            Debug.Log("End is still in polygon");
-                        }
-                        break;
+                        endChanged = true;
                     }
+
+                    if (startChanged && endChanged) break;
                 }
             }
 
@@ -204,7 +200,6 @@ namespace PointAndClick
             var aStar = new AStarAlgorithm(_mainWalkGraph.Nodes, startNode, endNode);
 
             ResetWalkGraph();
-            //  var aStar = new AStarAlgorithm(_walkGraph, startNodeIndex, endNodeIndex);
             return aStar.GetPath();
         }
 

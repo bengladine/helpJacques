@@ -10,7 +10,7 @@ namespace PointAndClick
     [System.Serializable]
     public class Polygon : MonoBehaviour
     {
-        [SerializeField, HideInInspector]
+        [HideInInspector]
         public List<Vector2> Points = new List<Vector2>();
 
         public Color ControlCol = Color.red;
@@ -19,6 +19,7 @@ namespace PointAndClick
         public float ControlPointDiameter = 0.075f;
         public bool displayControlPoints = true;
 
+        [HideInInspector]
         public Vector4 BoundingBox = new Vector4();
 
         private void Awake()
@@ -86,50 +87,6 @@ namespace PointAndClick
             return false;
         }
 
-        //public bool IsPointInPolygon(Vector2 point, bool toleranceOutside = true)
-        //{
-        //    bool isInside = false;
-        //    // if polygon has less than three points it's always outside
-        //    if (Points.Count < 3)
-        //        return false;
-
-        //    Vector2 oldPoint = Points[Points.Count - 1];
-        //    float oldSqDist = Helpers.DistanceSquared(oldPoint, point);
-
-        //    for (int i = 0; i < Points.Count; i++)
-        //    {
-        //        Vector2 newPoint = Points[i];
-        //        float newSqDist = Helpers.DistanceSquared(newPoint, point);
-
-        //        if (oldSqDist + newSqDist + 2.0f * Mathf.Sqrt(oldSqDist * newSqDist) - Helpers.DistanceSquared(newPoint, oldPoint) < 0.5f)
-        //            return toleranceOutside;
-
-        //        Vector2 left;
-        //        Vector2 right;
-
-        //        if (newPoint.x > oldPoint.x)
-        //        {
-        //            left = oldPoint;
-        //            right = newPoint;
-        //        }
-        //        else
-        //        {
-        //            left = newPoint;
-        //            right = oldPoint;
-        //        }
-
-        //        if (left.x < point.x && point.x <= right.x && (point.y - left.y) * (right.x - left.x) < (right.y - left.y) * (point.x - left.x))
-        //        {
-        //            isInside = !isInside;
-        //        }
-
-        //        oldPoint = newPoint;
-        //        oldSqDist = newSqDist;
-        //    }
-
-        //    return isInside;
-        //}
-
         public Vector2 GetClosestPointOnEdge(Vector2 p, bool pointMustBeOut)
         {
             int vi1 = -1;
@@ -178,10 +135,10 @@ namespace PointAndClick
 
             // sometimes the point can still be in the polygon when it's on an edge, we want to avoid that so we move the point in a radial matter.
 
-            while(IsPointInPolygon(newPoint) == pointMustBeOut)
+            while (IsPointInPolygon(newPoint) == pointMustBeOut)
             {
                 newPoint = originalValue;
-                newPoint.x += Mathf.Cos(angle) * tolerance;      
+                newPoint.x += Mathf.Cos(angle) * tolerance;
                 newPoint.y += Mathf.Sin(angle) * tolerance;
                 angle += Mathf.PI / 2.0f;
                 counter++;
@@ -189,8 +146,6 @@ namespace PointAndClick
                     tolerance *= 2;
             }
 
-            //Vector2 dirTranslation = (newPoint - p).normalized;
-            //newPoint += dirTranslation * 0.1f;
             return newPoint;
         }
 
@@ -216,6 +171,8 @@ namespace PointAndClick
         Vector4 _boundingBox;
         float _segmentSelectDistanceThreshold;
         int selectedSegmentIndex = -1;
+
+        bool showPoints = false;
 
         private void OnEnable()
         {
@@ -337,16 +294,16 @@ namespace PointAndClick
             base.OnInspectorGUI();
             serializedObject.Update();
             SerializedProperty vertices = this.serializedObject.FindProperty("Points");
-            EditorGUILayout.PropertyField(vertices);
-            if (vertices.isExpanded)
+         //   EditorGUILayout.PropertyField(vertices);
+            showPoints = EditorGUILayout.Foldout(showPoints, "Points");
+            if (showPoints)
             {
                 EditorGUIUtility.labelWidth = 65;
                 EditorGUI.indentLevel += 1;
                 for (int i = 0; i < vertices.arraySize; i++)
                 {
                     SerializedProperty vertexRef = vertices.GetArrayElementAtIndex(i);
-                    SerializedProperty position = vertexRef.FindPropertyRelative("Position");
-                    EditorGUILayout.PropertyField(position, new GUIContent($"Point {i}: "));
+                    EditorGUILayout.PropertyField(vertexRef, new GUIContent($"Point {i}: "));
                 }
                 EditorGUI.indentLevel -= 1;
             }

@@ -37,6 +37,8 @@ public class Player : MonoBehaviour
 
             _target = Camera.main.ScreenToWorldPoint(new Vector3(mousePosition.x, mousePosition.y, -Camera.main.gameObject.transform.position.z));
 
+            Debug.Log($"X: {_target.x}, Y: {_target.y}");
+
             _steps = CollisionManager.Instance.PolygonMap.CalculatePath(transform.position, _target);
 
             _currentTarget = _steps[_currentStep];

@@ -61,6 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\AStarAlgorithm.cs" />
+    <Compile Include="Assets\Scripts\BackgroundManager.cs" />
     <Compile Include="Assets\Scripts\CollisionManager.cs" />
     <Compile Include="Assets\Scripts\Edge.cs" />
     <Compile Include="Assets\Scripts\GeometryFunctions.cs" />
@@ -74,6 +75,7 @@
     <Compile Include="Assets\Scripts\PointAndClick\Node.cs" />
     <Compile Include="Assets\Scripts\PointAndClick\PolygonMap.cs" />
     <Compile Include="Assets\Scripts\Polygon.cs" />
+    <Compile Include="Assets\Scripts\SingletonBase.cs" />
     <Compile Include="Assets\Scripts\Test.cs" />
     <Reference Include="Unity.TextMeshPro.Editor">
       <HintPath>C:/Users/ben_g/Documents/Projects/Educational_Games/helpJacques/Library/ScriptAssemblies/Unity.TextMeshPro.Editor.dll</HintPath>
