@@ -5,6 +5,7 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
     [SerializeField] private float _speed = 1.0f;
+    private float _currentSpeed = 0.0f;
     private float _radius = 0.05f;
     private Vector3 _target;
     private Vector2 _currentTarget;
@@ -16,6 +17,7 @@ public class Player : MonoBehaviour
     void Start()
     {
         _target = transform.position;
+        _currentSpeed = _speed;
 
         transform.position.Set(transform.position.x, transform.position.y, Camera.main.nearClipPlane);
     }
@@ -23,26 +25,24 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // pixel coordinate based on location
+        var scaleFactor = BackgroundManager.Instance.GetAlphaValue(transform.position);
+        transform.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
+        _currentSpeed = _speed * scaleFactor;
+        Debug.Log($"ScaleFactor: {scaleFactor}");
+
         if (Input.GetMouseButtonDown(0))
         {
             Vector3 mousePosition = Input.mousePosition;
             _currentStep = 0;
             _hasArrived = false;
 
-            //   Debug.Log($"Mouse Position Screenspace: {mousePosition}");
-
-            //  mousePosition.z = Camera.main.nearClipPlane;
             _target = Camera.main.ScreenToWorldPoint(new Vector3(mousePosition.x, mousePosition.y, mousePosition.z));
-            //     Debug.Log($"Mouse Position World space before clipped: {mousePosition}");
-
             _target = Camera.main.ScreenToWorldPoint(new Vector3(mousePosition.x, mousePosition.y, -Camera.main.gameObject.transform.position.z));
-
-            Debug.Log($"X: {_target.x}, Y: {_target.y}");
 
             _steps = CollisionManager.Instance.PolygonMap.CalculatePath(transform.position, _target);
 
             _currentTarget = _steps[_currentStep];
-            //   Debug.Log($"Mouse Postion world space after clipped : {_target}");
         }
 
         if (!_hasArrived)
@@ -51,7 +51,7 @@ public class Player : MonoBehaviour
             var targetDirection = ((Vector3)_currentTarget - transform.position).normalized;
 
             if (distance > _radius)
-                transform.position += targetDirection * _speed * Time.deltaTime;
+                transform.position += targetDirection * _currentSpeed * Time.deltaTime;
             else
             {
                 transform.position = _currentTarget;

@@ -8,8 +8,8 @@ using PointAndClick;
 public class Manager : MonoBehaviour
 {
     public Path Path;
-    private List<Polygon> _listOfColliderPolygons = null;
 
+    private List<Polygon> _listOfColliderPolygons = null;
     private void OnEnable()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;
@@ -17,6 +17,8 @@ public class Manager : MonoBehaviour
 
     private void Update()
     {
+
+        //debug
         if (Input.GetKey(KeyCode.W))
         {
             CollisionManager.Instance.PolygonMap.DrawLineOfSight();
@@ -47,6 +49,13 @@ public class Manager : MonoBehaviour
             CollisionManager.Instance.PolygonMap = new PolygonMap(_listOfColliderPolygons);
         }
         else Debug.LogError("No colliders attached, did you forget to add them to the manager?");
+
+        //if (DistanceTexture != null && DepthSprite != null)
+        //{
+        //    BackgroundManager.Instance.DistanceTexture = DistanceTexture;
+        //    BackgroundManager.Instance.DepthSpriteObject = DepthSprite.GetComponent<SpriteRenderer>().sprite;
+        //}
+        //else Debug.LogError("No background depth texture added");
         //if (ListOfColliderPolygons.Count > 0)
         //{
         //    Instance.PolygonMap = new PolygonMap(ListOfColliderPolygons);
